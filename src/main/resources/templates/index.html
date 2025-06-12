@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시판</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        input, textarea { width: 300px; margin-bottom: 10px; }
+        button { margin: 5px; }
+        .board { margin-top: 20px; border-top: 1px solid #ccc; padding-top: 10px; }
+    </style>
+</head>
+<body>
+
+<h1>📋 게시판</h1>
+
+<h2>글 작성</h2>
+<input type="text" id="title" placeholder="제목"><br>
+<textarea id="content" rows="4" placeholder="내용"></textarea><br>
+<input type="text" id="writer" placeholder="작성자"><br>
+<button onclick="createPost()">등록</button>
+
+<h2>글 목록</h2>
+<button onclick="loadPosts()">새로고침</button>
+<div id="boardList"></div>
+
+<script>
+    const baseUrl = 'http://localhost:8080/board';
+
+    function createPost() {
+        const data = {
+            title: document.getElementById('title').value,
+            content: document.getElementById('content').value,
+            writer: document.getElementById('writer').value
+        };
+
+        fetch(`${baseUrl}/write`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+            .then(res => res.json())
+            .then(post => {
+                alert('글이 등록되었습니다.');
+                loadPosts();
+            });
+    }
+
+    function loadPosts() {
+        fetch(`${baseUrl}/list`)
+            .then(res => res.json())
+            .then(posts => {
+                const listDiv = document.getElementById('boardList');
+                listDiv.innerHTML = '';
+                posts.forEach(post => {
+                    const postDiv = document.createElement('div');
+                    postDiv.className = 'board';
+                    postDiv.innerHTML = `
+              <strong>${post.title}</strong> (${post.writer})<br>
+              ${post.content}<br>
+              <button onclick="deletePost(${post.id})">삭제</button>
+            `;
+                    listDiv.appendChild(postDiv);
+                });
+            });
+    }
+
+    function deletePost(id) {
+        fetch(`${baseUrl}/delete/${id}`, {
+            method: 'DELETE'
+        })
+            .then(() => {
+                alert('삭제되었습니다.');
+                loadPosts();
+            });
+    }
+
+    // 페이지 열릴 때 목록 로딩
+    window.onload = loadPosts;
+</script>
+</body>
+</html>
